@@ -37,7 +37,7 @@ if (REDIS_URL) {
   });
 }
 
-const PORT = parseInt(process.env.PORT || "3001", 10);
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.REALTIME_SECRET || "super-secret-key_CHANGE_ME";
 
 // Types
@@ -324,9 +324,8 @@ function getIceServers() {
   return iceServers;
 }
 
-httpServer.listen(PORT, '0.0.0.0', () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Realtime server running on port ${PORT}`);
   console.log(`📡 YariConnect presence tracking enabled`);
   console.log(`🔧 Mode: ${REDIS_URL ? 'Multi-instance (Redis)' : 'Single-instance (In-memory)'}`);
-  console.log(`📱 Local network access: Bind to 0.0.0.0 (use your machine's IP for testing on mobile)`);
 });

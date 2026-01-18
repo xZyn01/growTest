@@ -85,12 +85,9 @@ export default function YariConnectClient({ token, currentUser, initialNetworkin
 
     // Connect to Socket.IO for presence updates
     useEffect(() => {
-        const envUrl = process.env.NEXT_PUBLIC_REALTIME_URL;
-        // If envUrl is empty string (Proxy Mode), use undefined (relative).
-        // Otherwise use envUrl or fallback to localhost:3001.
-        const connectionUrl = envUrl === "" ? undefined : (envUrl || "http://localhost:3001");
+        const socketUrl = process.env.NEXT_PUBLIC_REALTIME_URL || "http://localhost:3001";
 
-        const newSocket = io(connectionUrl, {
+        const newSocket = io(socketUrl, {
             auth: { token },
             transports: ["websocket"],
             reconnectionAttempts: 5,
@@ -113,15 +110,29 @@ export default function YariConnectClient({ token, currentUser, initialNetworkin
         });
 
         newSocket.on("incoming-call", (data) => {
-            setIncomingCall(data);
+            setIncomingCall(data.from);
         });
 
-        newSocket.on("call-accepted", ({ answer, fromUserId }) => {
-            // Handled in VideoCall component normally, but we track state here if needed
-            setActiveCall({ userId: fromUserId, isInitiator: true });
+        newSocket.on("call-accepted", (data) => {
+            // I am the caller, and my call was accepted
+            setActiveCall({
+                userId: data.fromUserId,
+                isInitiator: true,
+                iceServers: data.iceServers
+            });
         });
 
-        newSocket.on("call-rejected", () => {
+        newSocket.on("call-started", (data) => {
+            // I am the receiver, call was started
+            if (activeCall) {
+                setActiveCall({
+                    ...activeCall,
+                    iceServers: data.iceServers
+                });
+            }
+        });
+
+        newSocket.on("call-rejected", (data) => {
             toast.error("Call rejected");
             setActiveCall(null);
         });
@@ -226,26 +237,6 @@ export default function YariConnectClient({ token, currentUser, initialNetworkin
                         Connect with professionals who share your interests and can help
                         accelerate your career growth.
                     </p>
-
-                    {/* Debug Info - Development Only */}
-                    {process.env.NODE_ENV === 'development' && (
-                        <div className="mt-4 p-3 bg-zinc-100 border border-zinc-200 rounded-lg text-xs font-mono text-left inline-block">
-                            <div><strong>Debug Info:</strong></div>
-                            <div>Status: <span className={socket?.connected ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-                                {socket?.connected ? "CONNECTED" : "DISCONNECTED"}
-                            </span></div>
-                            <div>Socket ID: {socket?.id || "N/A"}</div>
-                            <div>Target URL: {process.env.NEXT_PUBLIC_REALTIME_URL === ""
-                                ? <span className="text-blue-600 font-bold">Relative (Proxy Mode)</span>
-                                : (process.env.NEXT_PUBLIC_REALTIME_URL || "http://localhost:3001")}
-                            </div>
-                            <div className="text-zinc-500 mt-1">
-                                {process.env.NEXT_PUBLIC_REALTIME_URL === ""
-                                    ? "Correct! Using Next.js Rewrite Proxy."
-                                    : "If on mobile, ensure this is NOT localhost."}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 

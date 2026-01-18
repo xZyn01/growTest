@@ -39,13 +39,6 @@ export function VideoCall({ socket, remoteUserId, remoteUser, isInitiator, onEnd
 
         async function startCall() {
             try {
-                // Check for browser support and secure context (HTTPS)
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    setError("Camera/Mic access requires HTTPS. On mobile, use a secure connection or enable 'Insecure origins' flags.");
-                    console.error("navigator.mediaDevices is undefined. Context might be insecure (HTTP).");
-                    return;
-                }
-
                 let stream: MediaStream | null = null;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
