@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum EventMode {
+  ONLINE
+  OFFLINE
+}
+
+enum EventStatus {
+  SCHEDULED
+  ONGOING
+  UPCOMING
+  CANCELLED
+  COMPLETED
+}
+
+enum RegistrationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+
+model User {
+  id       String     @id @default(uuid())
+  name     String
+  email    String   @unique
+  phone    String?
+  username String?    @unique
+  password String?    // Optional for OAuth users
+  role      Role     @default(USER)
+  
+  // OAuth fields
+  googleId   String?    @unique  // Google user ID
+  linkedinId String?    @unique  // LinkedIn user ID
+  image      String?    // Profile picture URL
+  bio        String?    // User bio/description
+  location   String?
+  headline   String?
+  linkedinUrl String?
+  websiteUrl String?
+  twitterUrl String?
+  
+  // Networking Profile
+  networkingAvailable Boolean @default(false) // Toggle for availability
+  industry            String?    // e.g. Technology, Finance
+  experienceLevel     String?    // e.g. Senior (6-10 years)
+  interests           String[]   // e.g. ["AI", "Startups"] - Postgres Array
+  skills              String[]   // e.g. ["React", "Sales"] - Postgres Array
+
+  registrations EventRegistration[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id       String  @id @default(uuid())
+  title    String
+  slug        String @unique
+  description String
+  imageUrl    String?
+  hostedBy    String  @default("GrowthYari")
+  date     DateTime
+  mode     EventMode
+  status   EventStatus @default(SCHEDULED)
+
+  meetingUrl  String?
+  location    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  capacity    Int?  // null = unlimited capacity
+  isFree      Boolean  @default(false)
+  includeGst  Boolean  @default(false)
+  categories  String[]
+
+  tickets     Ticket[]
+
+  registrations EventRegistration[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([startDate])
+}
+
+model EventRegistration {
+  id      String  @id @default(uuid())
+  userId   String
+  eventId  String
+  status   RegistrationStatus @default(ACTIVE)
+
+  ticketId String?
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+
+  // Payment Details
+  paymentId     String? // Razorpay Payment ID
+  orderId       String? // Razorpay Order ID
+  amountPaid    Float     @default(0)
+  paymentStatus String    @default("PENDING") // PENDING, COMPLETED, FAILED
+
+  user     User    @relation(fields: [userId], references: [id])
+  event    Event   @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique // Hashed version of the token
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+model Ticket {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  price       Float
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+}

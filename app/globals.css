@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  --primary: 142 71% 45%;
+}
+
+@keyframes gy-float-a {
+  0% {
+    transform: translate3d(-8%, -6%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(10%, 8%, 0) scale(1.06);
+  }
+
+  100% {
+    transform: translate3d(-8%, -6%, 0) scale(1);
+  }
+}
+
+@keyframes gy-float-b {
+  0% {
+    transform: translate3d(10%, 6%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-10%, -8%, 0) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(10%, 6%, 0) scale(1);
+  }
+}
+
+.gy-bubble-a {
+  animation: gy-float-a 1s ease-in-out infinite;
+  will-change: transform;
+}
+
+.gy-bubble-b {
+  animation: gy-float-b 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .gy-bubble-a,
+  .gy-bubble-b {
+    animation: none;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
